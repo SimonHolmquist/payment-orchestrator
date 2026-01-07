@@ -1,0 +1,79 @@
+# =========================
+# .NET build outputs
+# =========================
+bin/
+obj/
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+coverage-report/
+*.opencover.xml
+
+# =========================
+# Visual Studio
+# =========================
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.csproj.user
+
+# =========================
+# JetBrains Rider / IntelliJ
+# =========================
+.idea/
+*.sln.iml
+*.DotSettings.user
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# NuGet / packages
+# =========================
+packages/
+**/*.nupkg
+**/*.snupkg
+
+# =========================
+# Publishing
+# =========================
+publish/
+**/publish/
+
+# =========================
+# Docker / env files
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Local secrets / overrides
+# =========================
+appsettings.*.local.json
+secrets.json
