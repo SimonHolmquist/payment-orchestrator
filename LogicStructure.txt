@@ -1,9 +1,0 @@
-+--- src
-|   +--- PaymentOrchestrator.Api
-|   +--- PaymentOrchestrator.Application
-|   +--- PaymentOrchestrator.Domain
-|   +--- PaymentOrchestrator.Infrastructure
-|   +--- PaymentOrchestrator.Workers.OutboxPublisher
-|   \--- PaymentOrchestrator.Workers.Reconciliation
-\--- tests
-    +--- PaymentOrchestrator.Domain.Tests

@@ -76,4 +76,5 @@ publish/
 # Local secrets / overrides
 # =========================
 appsettings.*.local.json
+appsettings.Development.json
 secrets.json
