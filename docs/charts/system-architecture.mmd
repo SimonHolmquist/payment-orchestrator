@@ -1,0 +1,49 @@
+graph TD
+  subgraph Clients["External Parties"]
+    Client([Merchant / Client App])
+    PSP([PSP / Bank])
+  end
+
+  subgraph Host["Runtime Environment (Local via Docker Compose / Cloud)"]
+    subgraph Services[".NET Services"]
+      API["PaymentOrchestrator.Api<br/>(REST API)"]
+      App["PaymentOrchestrator.Application<br/>(Use Cases / CQRS)"]
+      Domain["PaymentOrchestrator.Domain<br/>(Aggregates, VOs, Events)"]
+      Infra["PaymentOrchestrator.Infrastructure<br/>(EF Core, Bus, Integrations)"]
+      OutboxWorker["Worker: OutboxPublisher"]
+      ReconWorker["Worker: Reconciliation"]
+      ReadModelWorker["(Future) Worker: ReadModel Updater"]
+    end
+
+    subgraph Data["Infrastructure"]
+      SQL[(SQL Server<br/>Payments + Outbox + Inbox)]
+      Rabbit((RabbitMQ<br/>Event Bus))
+      Mongo["MongoDB<br/>(Future) Read Models"]
+    end
+  end
+
+  %% Code dependencies (compile-time)
+  API --> App
+  App --> Domain
+  App --> Infra
+  OutboxWorker --> Infra
+  ReconWorker --> Infra
+  ReadModelWorker --> Infra
+
+  %% Runtime flows (execution)
+  Client -- "HTTP" --> API
+  API --> App --> Infra --> SQL
+
+  OutboxWorker -- "poll outbox" --> SQL
+  OutboxWorker -- "publish events" --> Rabbit
+
+  ReconWorker -- "scan unknown/stuck payments" --> SQL
+  ReconWorker -- "verify status" --> PSP
+  ReconWorker -- "update payment + outbox" --> SQL
+
+  Rabbit -. "consume events" .-> ReadModelWorker -. "upsert projections" .-> Mongo
+
+  style Domain fill:#f9f,stroke:#333,stroke-width:2px,color:black
+  style SQL fill:#e1f5fe,stroke:#333
+  style Rabbit fill:#ffe0b2,stroke:#333
+  style Mongo fill:#e8f5e9,stroke:#333

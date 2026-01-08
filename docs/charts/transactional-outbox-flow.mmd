@@ -1,0 +1,27 @@
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant API as REST API
+  participant APP as Application (Use Case)
+  participant DB as SQL Server
+  participant OX as OutboxPublisher Worker
+  participant MQ as RabbitMQ
+
+  C->>API: POST /payments (Idempotency-Key?)
+  API->>APP: CreatePaymentCommand
+  APP->>DB: BEGIN TX
+  APP->>DB: Insert Payments row
+  APP->>DB: Insert OutboxMessages row(s)
+  APP->>DB: COMMIT TX
+  API-->>C: 201 Created (PaymentId)
+
+  loop Poll outbox batch
+    OX->>DB: Select pending OutboxMessages
+    OX->>MQ: Publish event(s)
+    alt publish ok
+      OX->>DB: Mark OutboxMessages as Published
+    else transient failure
+      OX->>DB: Increment Attempts / schedule retry
+      Note over OX,DB: At-least-once delivery. Consumers must dedupe.
+    end
+  end

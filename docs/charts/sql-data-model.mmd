@@ -1,0 +1,62 @@
+erDiagram
+  PAYMENTS {
+    uniqueidentifier PaymentId PK
+    varchar ClientId
+    decimal Amount
+    char Currency
+    decimal CapturedAmount
+    decimal RefundedAmount
+    int Status
+    varchar PspReference
+    varchar FailureReason
+    datetimeoffset CreatedAt
+    datetimeoffset AuthorizedAt
+    datetimeoffset CapturedAt
+    datetimeoffset CancelledAt
+    datetimeoffset FailedAt
+    rowversion RowVersion
+  }
+
+  OUTBOX_MESSAGES {
+    uniqueidentifier OutboxId PK
+    uniqueidentifier PaymentId FK
+    varchar Type
+    varchar CorrelationId
+    datetimeoffset OccurredAt
+    varchar PayloadJson
+    int Attempts
+    datetimeoffset PublishedAt
+    varchar Status
+  }
+
+  INBOX_MESSAGES {
+    uniqueidentifier InboxId PK
+    varchar ProviderEventId UK
+    varchar Provider
+    datetimeoffset ReceivedAt
+    varchar PayloadHash
+    varchar Status
+  }
+
+  IDEMPOTENCY_KEYS {
+    uniqueidentifier IdempotencyId PK
+    varchar ClientId
+    varchar Key UK
+    varchar RequestHash
+    datetimeoffset CreatedAt
+    varchar ResponseJson
+  }
+
+  PAYMENT_LEDGER {
+    uniqueidentifier LedgerId PK
+    uniqueidentifier PaymentId FK
+    datetimeoffset At
+    varchar ActorType
+    varchar Action
+    varchar BeforeJson
+    varchar AfterJson
+    varchar CorrelationId
+  }
+
+  PAYMENTS ||--o{ OUTBOX_MESSAGES : generates
+  PAYMENTS ||--o{ PAYMENT_LEDGER : records

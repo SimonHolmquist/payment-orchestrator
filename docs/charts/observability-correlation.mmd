@@ -1,0 +1,32 @@
+flowchart LR
+  Client([Client]) -->|HTTP Request| API[API]
+  API -->|correlationId + traceId| App[Application]
+  App --> Infra[Infrastructure]
+  Infra --> SQL[(SQL Server)]
+  Infra --> MQ((RabbitMQ))
+  MQ --> Worker[Workers]
+  Worker --> SQL
+  Worker --> PSP([PSP])
+
+  subgraph Telemetry["Observability Signals"]
+    Logs[Structured Logs]
+    Traces[Distributed Traces]
+    Metrics[Metrics]
+  end
+
+  API -.-> Logs
+  App -.-> Logs
+  Worker -.-> Logs
+
+  API -.-> Traces
+  Worker -.-> Traces
+
+  API -.-> Metrics
+  Worker -.-> Metrics
+
+  %% Solución: Nodo de texto conectado para simular la nota
+  NoteAPI["Propagate correlationId/traceId:<br/>- HTTP headers (X-Correlation-Id)<br/>- broker headers (correlation-id)<br/>- log scopes"]
+  API -.- NoteAPI
+
+  %% Estilo opcional para que parezca un post-it
+  style NoteAPI fill:#fff9c4,stroke:#d4c688,color:#333

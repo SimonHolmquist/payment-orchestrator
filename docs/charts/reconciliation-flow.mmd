@@ -1,0 +1,25 @@
+sequenceDiagram
+  autonumber
+  participant R as Reconciliation Worker
+  participant DB as SQL Server
+  participant PSP as PSP
+  participant APP as Application
+  participant DOM as Domain (Payment)
+  participant OX as Outbox
+
+  loop scheduled interval
+    R->>DB: Query payments with Status=Unknown or stale Pending
+    alt none found
+      R-->>R: Sleep
+    else found
+      R->>PSP: GET /payments/{pspReference}
+      PSP-->>R: status + details
+      R->>APP: ReconcilePaymentCommand
+      APP->>DB: BEGIN TX
+      APP->>DB: Load Payment
+      APP->>DOM: Resolve state (Captured/Failed/Cancelled)
+      APP->>DB: Update Payment
+      APP->>OX: Insert OutboxMessages
+      APP->>DB: COMMIT TX
+    end
+  end

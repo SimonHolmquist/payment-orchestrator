@@ -1,0 +1,43 @@
+stateDiagram-v2
+  [*] --> Created : Create()
+
+  Created --> Authorized : MarkAuthorized()
+  Created --> Cancelled : Cancel()
+  Created --> Failed : Fail()
+  Created --> Unknown : MarkUnknown()
+
+  Authorized --> PartiallyCaptured : MarkCapture(partial)
+  Authorized --> Captured : MarkCapture(full)
+  Authorized --> Cancelled : Cancel()
+  Authorized --> Failed : Fail()
+  Authorized --> Unknown : MarkUnknown()
+
+  PartiallyCaptured --> PartiallyCaptured : MarkCapture(partial)
+  PartiallyCaptured --> Captured : MarkCapture(remaining)
+  PartiallyCaptured --> PartiallyRefunded : MarkRefund()
+  PartiallyCaptured --> Failed : Fail()
+  PartiallyCaptured --> Unknown : MarkUnknown()
+
+  Captured --> PartiallyRefunded : MarkRefund(partial)
+  Captured --> Refunded : MarkRefund(full)
+  Captured --> Failed : Fail()
+  Captured --> Unknown : MarkUnknown()
+
+  PartiallyRefunded --> PartiallyRefunded : MarkRefund(partial)
+  PartiallyRefunded --> Refunded : MarkRefund(remaining)
+  PartiallyRefunded --> Failed : Fail()
+  PartiallyRefunded --> Unknown : MarkUnknown()
+
+  Unknown --> Authorized : Late callback / Reconciliation
+  Unknown --> Captured : Reconciliation (Captured at PSP)
+  Unknown --> Failed : Reconciliation (Failed at PSP)
+  Unknown --> Cancelled : Reconciliation (Cancelled at PSP)
+
+  Cancelled --> [*]
+  Failed --> [*]
+  Refunded --> [*]
+
+  note right of Unknown
+    Uncertainty state (ADR-0004).
+    Reconciliation attempts to resolve it.
+  end note

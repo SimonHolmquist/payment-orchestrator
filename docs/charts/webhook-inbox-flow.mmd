@@ -1,0 +1,24 @@
+sequenceDiagram
+  autonumber
+  participant PSP as PSP
+  participant API as REST API
+  participant DB as SQL Server
+  participant APP as Application
+  participant DOM as Domain (Payment)
+
+  PSP->>API: POST /webhooks/psp (eventId, signature, payload)
+  API->>API: Validate signature & parse payload
+  API->>DB: BEGIN TX
+  API->>DB: Insert InboxMessages (UNIQUE ProviderEventId)
+  alt duplicate webhook
+    DB-->>API: Unique constraint violation
+    API-->>PSP: 200 OK (idempotent ack)
+  else first time webhook
+    API->>APP: ProcessPspWebhookCommand
+    APP->>DB: Load Payment
+    APP->>DOM: Apply state transition
+    APP->>DB: Update Payment
+    APP->>DB: Insert OutboxMessages
+    API->>DB: COMMIT TX
+    API-->>PSP: 200 OK
+  end

@@ -1,0 +1,90 @@
+classDiagram
+  direction LR
+
+  class Payment {
+    +PaymentId Id
+    +string ClientId
+    +Money Amount
+    +decimal CapturedAmount
+    +decimal RefundedAmount
+    +PaymentStatus Status
+    +string? PspReference
+    +string? FailureReason
+    +DateTimeOffset CreatedAt
+    +DateTimeOffset? AuthorizedAt
+    +DateTimeOffset? CapturedAt
+    +DateTimeOffset? CancelledAt
+    +DateTimeOffset? FailedAt
+    +IReadOnlyCollection~IDomainEvent~ DomainEvents
+    +static Create(id, clientId, amount, createdAt) Payment
+    +MarkAuthorized(pspReference, at) void
+    +MarkCapture(amount, at) void
+    +MarkRefund(amount, at) void
+    +Cancel(at) void
+    +Fail(reason, at) void
+    +MarkUnknown(reason, at) void
+    +DequeueDomainEvents() IDomainEvent[]
+  }
+
+  class PaymentId {
+    +Guid Value
+    +static New() PaymentId
+  }
+
+  class Money {
+    +decimal Amount
+    +string Currency
+    +static Of(amount, currency) Money
+    +Add(other) Money
+    +Subtract(other) Money
+  }
+
+  class DomainException {
+    +DomainException(message)
+  }
+
+  class Guard {
+    +NotNullOrWhiteSpace(value, name) string
+    +Positive(value, name) decimal
+    +NonNegative(value, name) decimal
+  }
+
+  class IDomainEvent {
+    <<interface>>
+    +DateTimeOffset OccurredAt
+  }
+
+  class PaymentStatus {
+    <<enum>>
+    Created
+    Authorized
+    PartiallyCaptured
+    Captured
+    PartiallyRefunded
+    Refunded
+    Cancelled
+    Failed
+    Unknown
+  }
+
+  class PaymentCreated { +PaymentId PaymentId +string ClientId +Money Amount +DateTimeOffset OccurredAt }
+  class PaymentAuthorized { +PaymentId PaymentId +string PspReference +DateTimeOffset OccurredAt }
+  class PaymentCaptured { +PaymentId PaymentId +decimal CapturedNow +decimal CapturedTotal +PaymentStatus Status +DateTimeOffset OccurredAt }
+  class PaymentRefunded { +PaymentId PaymentId +decimal RefundedNow +decimal RefundedTotal +PaymentStatus Status +DateTimeOffset OccurredAt }
+  class PaymentCancelled { +PaymentId PaymentId +DateTimeOffset OccurredAt }
+  class PaymentFailed { +PaymentId PaymentId +string Reason +DateTimeOffset OccurredAt }
+  class PaymentMarkedUnknown { +PaymentId PaymentId +string Reason +DateTimeOffset OccurredAt }
+
+  Payment "1" *-- "1" Money
+  Payment "1" o-- "many" IDomainEvent
+  Payment --> PaymentId
+  Payment --> PaymentStatus
+  Guard ..> DomainException
+
+  IDomainEvent <|.. PaymentCreated
+  IDomainEvent <|.. PaymentAuthorized
+  IDomainEvent <|.. PaymentCaptured
+  IDomainEvent <|.. PaymentRefunded
+  IDomainEvent <|.. PaymentCancelled
+  IDomainEvent <|.. PaymentFailed
+  IDomainEvent <|.. PaymentMarkedUnknown

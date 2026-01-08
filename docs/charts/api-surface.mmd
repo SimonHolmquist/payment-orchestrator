@@ -1,0 +1,45 @@
+flowchart TD
+  A[Client] -->|HTTP| API[PaymentOrchestrator.Api]
+
+  subgraph Endpoints["REST Endpoints"]
+    E1["POST /payments<br/>Headers: Idempotency-Key (recommended)"]
+    E2["GET /payments/{id}"]
+    E3["POST /payments/{id}/authorize"]
+    E4["POST /payments/{id}/capture"]
+    E5["POST /payments/{id}/refund"]
+    E6["POST /payments/{id}/cancel"]
+    E7["POST /webhooks/psp"]
+    E8["GET /health/ready<br/>GET /health/live"]
+  end
+
+  API --> E1 --> C1["CreatePaymentCommand"]
+  API --> E2 --> Q1["GetPaymentByIdQuery"]
+  API --> E3 --> C2["AuthorizePaymentCommand"]
+  API --> E4 --> C3["CapturePaymentCommand"]
+  API --> E5 --> C4["RefundPaymentCommand"]
+  API --> E6 --> C5["CancelPaymentCommand"]
+  API --> E7 --> W1["ProcessPspWebhookCommand"]
+  API --> E8
+
+  subgraph Application["PaymentOrchestrator.Application"]
+    C1
+    Q1
+    C2
+    C3
+    C4
+    C5
+    W1
+  end
+
+  Application -->|Use cases| Domain["PaymentOrchestrator.Domain<br/>(Payment aggregate)"]
+
+  %% --- CORRECCIÓN: Nodos de nota conectados ---
+  NoteE1["Use Idempotency-Key to safely retry client calls."]
+  E1 -.- NoteE1
+
+  NoteE7["Validate signature, dedupe (Inbox), apply state transition,<br/>write Outbox event."]
+  E7 -.- NoteE7
+
+  %% Estilo visual para las notas (amarillo post-it)
+  style NoteE1 fill:#fff9c4,stroke:#d4c688,color:#333
+  style NoteE7 fill:#fff9c4,stroke:#d4c688,color:#333
