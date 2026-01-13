@@ -6,7 +6,7 @@ namespace PaymentOrchestrator.Domain.Payments;
 
 public sealed class Payment
 {
-    private readonly List<IDomainEvent> _domainEvents = new();
+    private readonly List<IDomainEvent> _domainEvents = [];
 
     public PaymentId Id { get; private set; }
     public string ClientId { get; private set; } = default!;
