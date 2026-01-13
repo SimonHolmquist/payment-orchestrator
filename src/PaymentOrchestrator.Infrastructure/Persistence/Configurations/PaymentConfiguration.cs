@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PaymentOrchestrator.Domain.Payments;
-using PaymentOrchestrator.Domain.Payments.ValueObjects;
 
 namespace PaymentOrchestrator.Infrastructure.Persistence.Configurations;
 
@@ -22,6 +21,13 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.ClientId)
             .HasMaxLength(100)
             .IsRequired();
+
+        // Ensure decimal precision/scale for monetary accumulators to avoid silent truncation
+        builder.Property(p => p.CapturedAmount)
+            .HasPrecision(18, 2);
+
+        builder.Property(p => p.RefundedAmount)
+            .HasPrecision(18, 2);
 
         // Mapeo de Value Object Money como Owned Entity (Columns: Amount, Currency)
         builder.OwnsOne(p => p.Amount, money =>

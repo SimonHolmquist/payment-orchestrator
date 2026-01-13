@@ -10,7 +10,7 @@ public sealed class Payment
 
     public PaymentId Id { get; private set; }
     public string ClientId { get; private set; } = default!;
-    public Money Amount { get; private set; }
+    public Money Amount { get; private set; } = default!;
 
     // Captures/Refunds parciales: acumuladores
     public decimal CapturedAmount { get; private set; }

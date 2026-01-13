@@ -1,4 +1,4 @@
-﻿using MediatR;
+﻿using PaymentOrchestrator.Application.Common.Abstractions;
 
 namespace PaymentOrchestrator.Application.Payments.Commands.CreatePayment;
 
@@ -7,4 +7,4 @@ public record CreatePaymentCommand(
     string ClientId,
     decimal Amount,
     string Currency
-) : IRequest<Guid>;
+) : ITransactionalRequest<Guid>;

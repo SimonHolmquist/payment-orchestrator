@@ -2,7 +2,7 @@ using PaymentOrchestrator.Domain.Common;
 
 namespace PaymentOrchestrator.Domain.Payments.ValueObjects;
 
-public readonly record struct Money
+public sealed record Money
 {
     public decimal Amount { get; }
     public string Currency { get; }

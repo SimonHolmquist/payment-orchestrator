@@ -20,6 +20,7 @@ public static class DependencyInjection
             // Registrar comportamientos del pipeline en orden
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
         });
 
         // Registrar validadores de FluentValidation

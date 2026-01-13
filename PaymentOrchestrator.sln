@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{10EE
 		.config\dotnet-tools.json = .config\dotnet-tools.json
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentOrchestrator.Application.Tests", "PaymentOrchestrator.Application.Tests\PaymentOrchestrator.Application.Tests.csproj", "{0F288369-7746-46BE-939D-2D95D5E9F898}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,18 @@ Global
 		{2C06C6F4-2313-4652-9AC8-8E6026070D5F}.Release|x64.Build.0 = Release|Any CPU
 		{2C06C6F4-2313-4652-9AC8-8E6026070D5F}.Release|x86.ActiveCfg = Release|Any CPU
 		{2C06C6F4-2313-4652-9AC8-8E6026070D5F}.Release|x86.Build.0 = Release|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Debug|x64.Build.0 = Debug|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Debug|x86.Build.0 = Debug|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Release|x64.ActiveCfg = Release|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Release|x64.Build.0 = Release|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Release|x86.ActiveCfg = Release|Any CPU
+		{0F288369-7746-46BE-939D-2D95D5E9F898}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -139,6 +153,7 @@ Global
 		{3A5E8063-4719-4B69-952A-CC14AC7EFF04} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{915E9706-0BC2-4055-9459-9404AF9B010B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{2C06C6F4-2313-4652-9AC8-8E6026070D5F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{0F288369-7746-46BE-939D-2D95D5E9F898} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {047D28CB-2EDA-4825-A354-FD4776F1118A}
