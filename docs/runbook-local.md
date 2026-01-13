@@ -4,7 +4,7 @@
 
 ## Requisitos
 - Docker Engine / Docker Desktop
-- .NET SDK **8.0.416** (pinneado por `global.json`)
+- .NET SDK **8.0.407** (pinneado por `global.json`)
 
 ## 1) Infra (SQL Server  RabbitMQ  Mongo)
 
