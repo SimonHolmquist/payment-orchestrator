@@ -12,9 +12,14 @@ public sealed class PaymentOrchestratorDbContext(DbContextOptions<PaymentOrchest
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
     public DbSet<IdempotencyKey> IdempotencyKeys => Set<IdempotencyKey>();
+    public DbSet<PaymentLedgerEntry> PaymentLedger => Set<PaymentLedgerEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+        // Aplica TODAS las configuraciones (Payment, Outbox, Ledger, etc.) del assembly actual
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(PaymentOrchestratorDbContext).Assembly);
+
         modelBuilder.Entity<Payment>(b =>
         {
             b.ToTable("Payments");

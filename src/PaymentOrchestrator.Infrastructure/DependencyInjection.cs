@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentOrchestrator.Application.Common.Interfaces;
 using PaymentOrchestrator.Infrastructure.Persistence;
+using PaymentOrchestrator.Infrastructure.Persistence.Interceptors; // Importante
 
 namespace PaymentOrchestrator.Infrastructure;
 
@@ -13,9 +14,18 @@ public static class DependencyInjection
         var cs = config.GetConnectionString("SqlServer")
                  ?? throw new InvalidOperationException("Missing ConnectionStrings:SqlServer");
 
-        services.AddDbContext<PaymentOrchestratorDbContext>(opt => opt.UseSqlServer(cs));
+        // Registrar el Interceptor
+        services.AddScoped<DomainEventsToOutboxInterceptor>();
 
-        services.AddScoped<IPaymentRepository, Persistence.EfPaymentRepository>();
+        services.AddDbContext<PaymentOrchestratorDbContext>((sp, opt) =>
+        {
+            opt.UseSqlServer(cs);
+            // Inyectar el interceptor resuelto desde el contenedor
+            opt.AddInterceptors(sp.GetRequiredService<DomainEventsToOutboxInterceptor>());
+        });
+
+        services.AddScoped<IPaymentRepository, EfPaymentRepository>();
+        // EfUnitOfWork ya no necesita ICorrelationContext en su constructor
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IInboxStore, EfInboxStore>();
         services.AddScoped<IIdempotencyStore, EfIdempotencyStore>();
