@@ -1,47 +1,69 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PaymentOrchestrator.Application.Common.Interfaces;
+using PaymentOrchestrator.Domain.Payments;
+using PaymentOrchestrator.Infrastructure.Persistence.Entities;
+using System.Text.Json;
 
 namespace PaymentOrchestrator.Infrastructure.Persistence;
 
-public class EfUnitOfWork(PaymentOrchestratorDbContext context) : IUnitOfWork
+public sealed class EfUnitOfWork(
+    PaymentOrchestratorDbContext db,
+    ICorrelationContext correlation)
+    : IUnitOfWork
 {
-    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task SaveChangesAsync(CancellationToken ct = default)
     {
-        await context.SaveChangesAsync(cancellationToken);
+        EnqueueDomainEventsToOutbox();
+        await db.SaveChangesAsync(ct);
     }
 
-    public async Task<T> ExecuteInTransactionAsync<T>(
-        Func<CancellationToken, Task<T>> action,
-        CancellationToken cancellationToken = default)
+    public async Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> action, CancellationToken ct = default)
     {
-        // Start a new transaction (or join ambient one if provider supports it)
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-        try
+        // EF Core uses implicit transaction for SaveChanges, pero acá garantizamos transacción alrededor de múltiples SaveChanges si existieran.
+        var strategy = db.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            var result = await action(cancellationToken);
-
-            // Ensure changes are flushed before committing.
-            await context.SaveChangesAsync(cancellationToken);
-
-            await transaction.CommitAsync(cancellationToken);
+            await using var tx = await db.Database.BeginTransactionAsync(ct);
+            var result = await action(ct);
+            await tx.CommitAsync(ct);
             return result;
-        }
-        catch
-        {
-            // Best-effort rollback then rethrow
-            try
-            {
-                await transaction.RollbackAsync(cancellationToken);
-            }
-            catch
-            {
-                // swallow secondary exceptions to preserve original error
-            }
+        });
+    }
 
-            throw;
+    private void EnqueueDomainEventsToOutbox()
+    {
+        var payments = db.ChangeTracker.Entries<Payment>()
+            .Select(e => e.Entity)
+            .ToArray();
+
+        foreach (var payment in payments)
+        {
+            var events = payment.DequeueDomainEvents();
+            foreach (var ev in events)
+            {
+                var msg = new OutboxMessage
+                {
+                    Id = Guid.NewGuid(),
+                    Type = ev.GetType().FullName ?? ev.GetType().Name,
+                    Content = JsonSerializer.Serialize(ev, ev.GetType()),
+                    AggregateId = payment.Id.Value,
+                    AggregateType = nameof(Payment),
+                    CorrelationId = correlation.CorrelationId,
+                    OccurredAt = ExtractOccurredAt(ev)
+                };
+
+                db.OutboxMessages.Add(msg);
+            }
         }
+    }
+
+    private static DateTimeOffset ExtractOccurredAt(object ev)
+    {
+        // Convención: events tienen propiedad OccurredAt
+        var prop = ev.GetType().GetProperty("OccurredAt");
+        if (prop?.PropertyType == typeof(DateTimeOffset))
+            return (DateTimeOffset)prop.GetValue(ev)!;
+
+        return DateTimeOffset.UtcNow;
     }
 }

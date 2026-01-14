@@ -16,4 +16,9 @@ public class EfPaymentRepository(PaymentOrchestratorDbContext context) : IPaymen
         return await context.Payments
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
+
+    public Task UpdateAsync(Payment payment, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

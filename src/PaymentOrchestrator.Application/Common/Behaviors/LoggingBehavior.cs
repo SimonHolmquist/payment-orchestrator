@@ -1,23 +1,29 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using PaymentOrchestrator.Application.Common.Interfaces;
 
 namespace PaymentOrchestrator.Application.Common.Behaviors;
 
-public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
+public sealed class LoggingBehavior<TRequest, TResponse>(
+    ILogger<LoggingBehavior<TRequest, TResponse>> logger,
+    ICorrelationContext correlation)
     : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : notnull
+    where TRequest : IRequest<TResponse>
 {
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async Task<TResponse> Handle(
+        TRequest request,
+        RequestHandlerDelegate<TResponse> next,
+        CancellationToken cancellationToken)
     {
-        var requestName = typeof(TRequest).Name;
+        using var scope = logger.BeginScope(new Dictionary<string, object?>
+        {
+            ["CorrelationId"] = correlation.CorrelationId,
+            ["RequestName"] = typeof(TRequest).Name
+        });
 
-        // Log pre-execution
-        logger.LogInformation("Processing Command {CommandName}", requestName);
-
+        logger.LogInformation("Handling {RequestName}", typeof(TRequest).Name);
         var response = await next();
-
-        // Log post-execution
-        logger.LogInformation("Processed Command {CommandName}", requestName);
+        logger.LogInformation("Handled {RequestName}", typeof(TRequest).Name);
 
         return response;
     }

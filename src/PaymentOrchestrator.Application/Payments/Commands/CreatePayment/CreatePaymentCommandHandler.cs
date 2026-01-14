@@ -7,7 +7,8 @@ namespace PaymentOrchestrator.Application.Payments.Commands.CreatePayment;
 
 public class CreatePaymentCommandHandler(
     IPaymentRepository paymentRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IClock clock)
     : IRequestHandler<CreatePaymentCommand, Guid>
 {
     public async Task<Guid> Handle(CreatePaymentCommand request, CancellationToken cancellationToken)
@@ -18,7 +19,7 @@ public class CreatePaymentCommandHandler(
 
         // 2. Ejecutar lógica de dominio puro
         // Nota: Asumimos DateTimeOffset.UtcNow. En un entorno real, inyectaríamos IClock.
-        var payment = Payment.Create(paymentId, request.ClientId, money, DateTimeOffset.UtcNow);
+        var payment = Payment.Create(paymentId, request.ClientId, money, clock.UtcNow);
 
         // 3. Persistir cambios
         await paymentRepository.AddAsync(payment, cancellationToken);

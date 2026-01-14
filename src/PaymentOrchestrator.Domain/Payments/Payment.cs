@@ -110,6 +110,47 @@ public sealed class Payment
 
         AddEvent(new PaymentRefunded(Id, amountToRefund, RefundedAmount, Status, at));
     }
+    public void RequestAuthorization(DateTimeOffset at)
+    {
+        EnsureNotFinal();
+        EnsureStatus(PaymentStatus.Created, PaymentStatus.Unknown);
+
+        Status = PaymentStatus.AuthorizationRequested;
+        AddEvent(new PaymentAuthorizationRequested(Id, at));
+    }
+
+    public void RequestCapture(decimal amount, DateTimeOffset at)
+    {
+        EnsureNotFinal();
+        if (Status is not (PaymentStatus.Authorized or PaymentStatus.PartiallyCaptured or PaymentStatus.Unknown))
+            throw new DomainException($"Cannot request capture in status '{Status}'.");
+
+        Guard.Positive(amount, nameof(amount));
+        Status = PaymentStatus.CaptureRequested;
+        AddEvent(new PaymentCaptureRequested(Id, amount, at));
+    }
+
+    public void RequestRefund(decimal amount, DateTimeOffset at)
+    {
+        EnsureNotFinal();
+        if (Status is not (PaymentStatus.Captured or PaymentStatus.PartiallyCaptured or PaymentStatus.Unknown))
+            throw new DomainException($"Cannot request refund in status '{Status}'.");
+
+        Guard.Positive(amount, nameof(amount));
+        Status = PaymentStatus.RefundRequested;
+        AddEvent(new PaymentRefundRequested(Id, amount, at));
+    }
+
+    public void RequestCancel(DateTimeOffset at)
+    {
+        EnsureNotFinal();
+        if (Status is not (PaymentStatus.Created or PaymentStatus.Authorized or PaymentStatus.Unknown))
+            throw new DomainException($"Cannot request cancel in status '{Status}'.");
+
+        Status = PaymentStatus.CancelRequested;
+        AddEvent(new PaymentCancelRequested(Id, at));
+    }
+
 
     public void Cancel(DateTimeOffset at)
     {

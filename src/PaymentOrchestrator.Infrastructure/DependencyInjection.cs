@@ -3,27 +3,23 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentOrchestrator.Application.Common.Interfaces;
 using PaymentOrchestrator.Infrastructure.Persistence;
-using PaymentOrchestrator.Infrastructure.Persistence.Interceptors;
 using PaymentOrchestrator.Infrastructure.Persistence.Repositories;
 
 namespace PaymentOrchestrator.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-        var connectionString = configuration.GetConnectionString("SqlServer");
+        var cs = config.GetConnectionString("SqlServer")
+                 ?? throw new InvalidOperationException("Missing ConnectionStrings:SqlServer");
 
-        services.AddSingleton<DispatchDomainEventsInterceptor>();
+        services.AddDbContext<PaymentOrchestratorDbContext>(opt => opt.UseSqlServer(cs));
 
-        services.AddDbContext<PaymentOrchestratorDbContext>((sp, options) =>
-        {
-            options.AddInterceptors(sp.GetRequiredService<DispatchDomainEventsInterceptor>());
-            options.UseSqlServer(connectionString);
-        });
-
-        services.AddScoped<IPaymentRepository, EfPaymentRepository>();
+        services.AddScoped<IPaymentRepository, Persistence.EfPaymentRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped<IInboxStore, EfInboxStore>();
+        services.AddScoped<IIdempotencyStore, EfIdempotencyStore>();
 
         return services;
     }
