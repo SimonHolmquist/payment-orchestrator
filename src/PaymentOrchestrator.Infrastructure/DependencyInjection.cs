@@ -3,7 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentOrchestrator.Application.Common.Interfaces;
 using PaymentOrchestrator.Infrastructure.Persistence;
-using PaymentOrchestrator.Infrastructure.Persistence.Interceptors; // Importante
+using PaymentOrchestrator.Infrastructure.Persistence.Interceptors;
+using PaymentOrchestrator.Infrastructure.Psp; // Importante
 
 namespace PaymentOrchestrator.Infrastructure;
 
@@ -29,6 +30,9 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IInboxStore, EfInboxStore>();
         services.AddScoped<IIdempotencyStore, EfIdempotencyStore>();
+        services.AddScoped<IOutboxWriter, EfOutboxWriter>();
+        services.AddSingleton<IPspClient, NullPspClient>();
+
 
         return services;
     }

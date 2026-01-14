@@ -99,7 +99,7 @@ public sealed class PaymentOrchestratorDbContext(DbContextOptions<PaymentOrchest
 
             b.Property(x => x.ResponseContentType).HasMaxLength(100);
 
-            b.HasIndex(x => new { x.ClientId, x.Key, x.OperationName }).IsUnique();
+            b.HasIndex(x => new { x.ClientId, x.Key }).IsUnique();
         });
     }
 }
