@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using PaymentOrchestrator.Infrastructure.Persistence;
+using PaymentOrchestrator.Infrastructure.Persistence.Entities;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -21,6 +25,26 @@ public sealed class PaymentLifecycleTests(WebApplicationFactory<Program> factory
         var createBody = await createRes.Content.ReadFromJsonAsync<Dictionary<string, string>>();
         var paymentId = Guid.Parse(createBody!["paymentId"]);
 
+        // --- VERIFICACIÓN DE "ENTERPRISE QUALITY" (NUEVO) ---
+        // Verificamos que al crear el pago, TAMBIÉN se escribió en la Outbox y el Ledger.
+        // Esto confirma que la transacción atómica y el interceptor funcionaron.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PaymentOrchestratorDbContext>();
+
+            var outboxCount = await db.OutboxMessages
+                .Where(x => x.AggregateId == paymentId)
+                .CountAsync();
+
+            var ledgerCount = await db.Set<PaymentLedgerEntry>()
+                .Where(x => x.PaymentId == paymentId)
+                .CountAsync();
+
+            Assert.True(outboxCount > 0, "Debe existir al menos un evento de Outbox (PaymentCreated).");
+            Assert.True(ledgerCount > 0, "Debe existir registro de auditoría en el Ledger.");
+        }
+        // -----------------------------------------------------
+
         // 2. Autorizar
         var authReq = new { pspReference = "psp-123" };
         var authRes = await _client.PostAsJsonAsync($"/payments/{paymentId}/authorize", authReq);
@@ -35,6 +59,7 @@ public sealed class PaymentLifecycleTests(WebApplicationFactory<Program> factory
         var getRes = await _client.GetAsync($"/payments/{paymentId}");
         getRes.EnsureSuccessStatusCode();
 
+        // (Usa dynamic o tu DTO si es accesible)
         var payment = await getRes.Content.ReadFromJsonAsync<PaymentDto>();
 
         Assert.NotNull(payment);

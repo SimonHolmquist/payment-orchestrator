@@ -7,6 +7,7 @@ using PaymentOrchestrator.Api.Infrastructure.Time;
 using PaymentOrchestrator.Application;
 using PaymentOrchestrator.Application.Common.Interfaces;
 using PaymentOrchestrator.Infrastructure;
+using PaymentOrchestrator.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,8 +27,8 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 // [Item 1] Estandarización: Registrar servicios de Health Checks nativos
-builder.Services.AddHealthChecks();
-// Nota: Aquí podrás agregar .AddSqlServer() y .AddRabbitMQ() en el futuro.
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<PaymentOrchestratorDbContext>();
 
 builder.Services.AddSwaggerGen(c =>
 {
