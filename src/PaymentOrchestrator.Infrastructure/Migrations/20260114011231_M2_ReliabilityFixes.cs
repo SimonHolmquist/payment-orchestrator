@@ -197,13 +197,13 @@ namespace PaymentOrchestrator.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_InboxMessages_Provider_ProviderEventId",
                 table: "InboxMessages",
-                columns: new[] { "Provider", "ProviderEventId" },
+                columns: ["Provider", "ProviderEventId"],
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_IdempotencyKeys_ClientId_Key_OperationName",
                 table: "IdempotencyKeys",
-                columns: new[] { "ClientId", "Key", "OperationName" },
+                columns: ["ClientId", "Key", "OperationName"],
                 unique: true);
         }
 

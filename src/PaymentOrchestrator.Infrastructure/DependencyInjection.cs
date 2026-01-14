@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentOrchestrator.Application.Common.Interfaces;
 using PaymentOrchestrator.Infrastructure.Persistence;
-using PaymentOrchestrator.Infrastructure.Persistence.Repositories;
 
 namespace PaymentOrchestrator.Infrastructure;
 
