@@ -89,7 +89,7 @@ public sealed class PaymentRepositoryTests : IAsyncLifetime
         var ledgerEntry = await assertContext.PaymentLedger.FirstOrDefaultAsync();
         Assert.NotNull(ledgerEntry);
         Assert.Equal(payment.Id.Value, ledgerEntry.PaymentId);
-        Assert.Equal("PaymentCreated", ledgerEntry.Action);
+        Assert.Equal("payment.created.v1", ledgerEntry.Action);
         Assert.Equal("test-correlation-xyz", ledgerEntry.CorrelationId);
 
         // Verificar snapshot JSON

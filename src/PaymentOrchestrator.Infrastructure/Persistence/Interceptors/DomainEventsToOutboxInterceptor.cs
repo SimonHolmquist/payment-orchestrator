@@ -53,7 +53,7 @@ public sealed class DomainEventsToOutboxInterceptor(ICorrelationContext correlat
                 {
                     Id = Guid.NewGuid(),
                     PaymentId = payment.Id.Value,
-                    Action = domainEvent.GetType().Name,
+                    Action = eventName,
                     OccurredAt = domainEvent.OccurredAt,
                     CorrelationId = correlationContext.CorrelationId,
                     // APLICAR LAS OPCIONES AQUÍ:
