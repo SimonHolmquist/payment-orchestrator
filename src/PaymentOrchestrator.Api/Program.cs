@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Diagnostics.HealthChecks; // [Item 1] Necesario para MapHealthChecks
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using PaymentOrchestrator.Api.Infrastructure.Correlation;
 using PaymentOrchestrator.Api.Infrastructure.Errors;
 using PaymentOrchestrator.Api.Infrastructure.Idempotency;
@@ -10,11 +10,11 @@ using PaymentOrchestrator.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// [Item 2] Configurar límites de Kestrel para proteger el buffering del IdempotencyFilter
+// [Item 2] Seguridad: Configurar límites de Kestrel
+// Esto protege contra ataques DoS por agotamiento de memoria al usar EnableBuffering en el IdempotencyFilter.
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    // Límite de 1MB para requests. Suficiente para payloads de pagos, evita DoS por memoria.
-    serverOptions.Limits.MaxRequestBodySize = 1 * 1024 * 1024;
+    serverOptions.Limits.MaxRequestBodySize = 1 * 1024 * 1024; // Límite de 1MB (suficiente para JSONs de pagos)
 });
 
 builder.Services.AddControllers(options =>
@@ -25,10 +25,9 @@ builder.Services.AddControllers(options =>
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-// [Item 1] Registrar servicios de Health Checks
+// [Item 1] Estandarización: Registrar servicios de Health Checks nativos
 builder.Services.AddHealthChecks();
-// Nota Enterprise: Aquí deberías añadir .AddSqlServer() y .AddRabbitMQ() usando los paquetes
-// 'AspNetCore.HealthChecks.SqlServer' y 'AspNetCore.HealthChecks.Rabbitmq'.
+// Nota: Aquí podrás agregar .AddSqlServer() y .AddRabbitMQ() en el futuro.
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -42,7 +41,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Correlation + clock
+// Infrastructure: Correlation + Clock
 builder.Services.AddSingleton<CorrelationContext>();
 builder.Services.AddScoped<ICorrelationContext>(_ => new CorrelationContext());
 builder.Services.AddSingleton<IClock, SystemClock>();
@@ -56,17 +55,16 @@ app.UseExceptionHandler();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// [Item 1] Mapear endpoints de Health Checks nativos
+// [Item 1] Estandarización: Endpoints nativos de Health Checks
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
-    // Liveness: Responde 200 OK si el proceso de .NET está corriendo.
-    // Predicate = _ => false excluye chequeos de dependencias (BD, etc.)
+    // Liveness: Responde 200 si la app arrancó. Ignora dependencias.
     Predicate = _ => false
 });
 
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
-    // Readiness: Ejecuta todos los chequeos registrados para confirmar que puede recibir tráfico.
+    // Readiness: Verifica que la app puede recibir tráfico (incluye dependencias si se registran).
     Predicate = _ => true
 });
 
@@ -74,4 +72,5 @@ app.MapControllers();
 
 app.Run();
 
-public partial class Program { } // Para tests de integración
+// Necesario para los tests de integración (WebApplicationFactory)
+public partial class Program { }
