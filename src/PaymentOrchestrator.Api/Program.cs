@@ -19,7 +19,7 @@ builder.Services.AddSwaggerGen(c =>
     c.OperationFilter<RequiredHeadersOperationFilter>();
 });
 
-builder.Services.AddApplication();
+builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // Correlation + clock

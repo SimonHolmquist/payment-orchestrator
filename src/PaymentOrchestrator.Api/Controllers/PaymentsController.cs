@@ -81,9 +81,9 @@ public sealed class PaymentsController(IMediator mediator, IIdempotencyStore ide
     }
 
     [HttpPost("{id:guid}/authorize")]
-    public async Task<IActionResult> Authorize(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Authorize(Guid id, [FromBody] AuthorizeRequest req, CancellationToken ct)
     {
-        await mediator.Send(new AuthorizePaymentCommand(id), ct);
+        await mediator.Send(new AuthorizePaymentCommand(id, req.PspReference), ct);
         return Accepted();
     }
 

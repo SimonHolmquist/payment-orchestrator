@@ -8,7 +8,8 @@ public sealed class RequiredHeadersOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        operation.Parameters ??= new List<OpenApiParameter>();
+        // CORRECCIÓN 1: Usar List<IOpenApiParameter> en lugar de inferir o usar concreta
+        operation.Parameters ??= [];
 
         operation.Parameters.Add(new OpenApiParameter
         {
@@ -16,10 +17,10 @@ public sealed class RequiredHeadersOperationFilter : IOperationFilter
             In = ParameterLocation.Header,
             Required = false,
             Description = "Correlation ID for tracing. If omitted, server generates one.",
-            Schema = new OpenApiSchema { Type = "string" }
+            // CORRECCIÓN 2: Usar JsonSchemaType.String (Enum) en lugar de "string"
+            Schema = new OpenApiSchema { Type = JsonSchemaType.String }
         });
 
-        // Solo documentamos idempotency en POST /payments (M3)
         if (context.ApiDescription.RelativePath?.Equals("payments", StringComparison.OrdinalIgnoreCase) == true
             && context.ApiDescription.HttpMethod?.Equals("POST", StringComparison.OrdinalIgnoreCase) == true)
         {
@@ -29,7 +30,8 @@ public sealed class RequiredHeadersOperationFilter : IOperationFilter
                 In = ParameterLocation.Header,
                 Required = false,
                 Description = "Safe retry key. Same body + same key returns same response.",
-                Schema = new OpenApiSchema { Type = "string", MaxLength = 200 }
+                // CORRECCIÓN 2: Mismo cambio aquí
+                Schema = new OpenApiSchema { Type = JsonSchemaType.String, MaxLength = 200 }
             });
         }
     }
