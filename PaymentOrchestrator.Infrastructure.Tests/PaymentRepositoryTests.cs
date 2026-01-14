@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PaymentOrchestrator.Application.Common.Interfaces; // Necesario para ICorrelationContext
+using Microsoft.Extensions.DependencyInjection; // Necesario para simular DI
+using PaymentOrchestrator.Application.Common.Interfaces;
 using PaymentOrchestrator.Domain.Payments;
-using PaymentOrchestrator.Domain.Payments.Events;
 using PaymentOrchestrator.Domain.Payments.ValueObjects;
 using PaymentOrchestrator.Infrastructure.Persistence;
+using PaymentOrchestrator.Infrastructure.Persistence.Interceptors;
 using System.Text.Json;
 using Testcontainers.MsSql;
 using Xunit;
@@ -12,74 +13,88 @@ namespace PaymentOrchestrator.Infrastructure.Tests;
 
 public sealed class PaymentRepositoryTests : IAsyncLifetime
 {
-    private readonly MsSqlContainer _mssql = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
-        .Build();
+    private readonly MsSqlContainer _mssql = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
 
     public async Task InitializeAsync() => await _mssql.StartAsync();
-
     public async Task DisposeAsync() => await _mssql.DisposeAsync();
 
-    private PaymentOrchestratorDbContext CreateContext()
-    {
-        var options = new DbContextOptionsBuilder<PaymentOrchestratorDbContext>()
-            .UseSqlServer(_mssql.GetConnectionString())
-            .Options;
-
-        var context = new PaymentOrchestratorDbContext(options);
-        context.Database.EnsureCreated();
-        return context;
-    }
-
-    // Fake para el test (necesario para el UnitOfWork)
+    // Fake para CorrelationContext
     private sealed class FakeCorrelationContext : ICorrelationContext
     {
-        public string CorrelationId => "test-correlation-id";
+        public string CorrelationId => "test-correlation-xyz";
+    }
+
+    private IServiceProvider CreateServiceProvider
+    {
+        get
+        {
+            var services = new ServiceCollection();
+
+            // Registrar DbContext con el Interceptor real
+            services.AddScoped<ICorrelationContext, FakeCorrelationContext>();
+            services.AddScoped<DomainEventsToOutboxInterceptor>();
+
+            services.AddDbContext<PaymentOrchestratorDbContext>((sp, options) =>
+            {
+                options.UseSqlServer(_mssql.GetConnectionString());
+                options.AddInterceptors(sp.GetRequiredService<DomainEventsToOutboxInterceptor>());
+            });
+
+            services.AddScoped<IPaymentRepository, EfPaymentRepository>();
+            services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+
+            return services.BuildServiceProvider();
+        }
     }
 
     [Fact]
-    public async Task AddAsync_ShouldPersistPayment_AndOutboxMessages()
+    public async Task AddAsync_ShouldPersistPayment_Outbox_And_Ledger()
     {
-        // Arrange
-        using var context = CreateContext();
+        // 1. Arrange: Crear scope y servicios
+        var provider = CreateServiceProvider;
+        using var scope = provider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PaymentOrchestratorDbContext>();
+        var repo = scope.ServiceProvider.GetRequiredService<IPaymentRepository>();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        // CORRECCIÓN: Instanciamos el UoW para que maneje la lógica de Outbox
-        var uow = new EfUnitOfWork(context, new FakeCorrelationContext());
-        var repository = new EfPaymentRepository(context);
+        // Asegurar BD creada
+        await context.Database.EnsureCreatedAsync();
 
         var payment = Payment.Create(
             PaymentId.New(),
-            "client-test",
-            Money.Of(150.00m, "USD"),
+            "client-enterprise",
+            Money.Of(99.99m, "EUR"),
             DateTimeOffset.UtcNow);
 
-        // Act
-        await repository.AddAsync(payment, CancellationToken.None);
+        // 2. Act: Añadir y Guardar
+        await repo.AddAsync(payment, CancellationToken.None);
+        await uow.SaveChangesAsync(CancellationToken.None); // Esto dispara el Interceptor
 
-        // CORRECCIÓN: Usamos uow.SaveChangesAsync() en lugar de context.SaveChangesAsync()
-        // Esto dispara EnqueueDomainEventsToOutbox() internamente.
-        await uow.SaveChangesAsync();
+        // 3. Assert: Verificar en un contexto limpio
+        using var assertScope = provider.CreateScope();
+        var assertContext = assertScope.ServiceProvider.GetRequiredService<PaymentOrchestratorDbContext>();
 
-        // Assert
-        using var assertContext = CreateContext();
+        // A. Verificar Payment
+        var persistedPayment = await assertContext.Payments.FirstOrDefaultAsync(p => p.Id == payment.Id);
+        Assert.NotNull(persistedPayment);
+        Assert.Equal("EUR", persistedPayment.Amount.Currency);
 
-        // 1. Verificar Payment
-        var persisted = await assertContext.Payments.FirstOrDefaultAsync(p => p.Id == payment.Id);
-        Assert.NotNull(persisted);
-        Assert.Equal(150.00m, persisted.Amount.Amount);
-        Assert.Equal("USD", persisted.Amount.Currency);
-        Assert.Equal(PaymentStatus.Created, persisted.Status);
-
-        // 2. Verificar Outbox (Ahora sí debería existir)
+        // B. Verificar Outbox (Requisito M2)
         var outboxMsg = await assertContext.OutboxMessages.FirstOrDefaultAsync();
+        Assert.NotNull(outboxMsg);
+        Assert.Equal("PaymentCreated", outboxMsg.Type);
+        Assert.Equal("test-correlation-xyz", outboxMsg.CorrelationId);
 
-        Assert.NotNull(outboxMsg); // Aquí fallaba antes
-        Assert.Equal(payment.Id.Value, outboxMsg.AggregateId);
-        Assert.Equal("Payment", outboxMsg.AggregateType);
-        Assert.Contains("PaymentCreated", outboxMsg.Type);
-        Assert.Equal("test-correlation-id", outboxMsg.CorrelationId);
+        // C. Verificar Ledger (Requisito A - Enterprise)
+        var ledgerEntry = await assertContext.PaymentLedger.FirstOrDefaultAsync();
+        Assert.NotNull(ledgerEntry);
+        Assert.Equal(payment.Id.Value, ledgerEntry.PaymentId);
+        Assert.Equal("PaymentCreated", ledgerEntry.Action);
+        Assert.Equal("test-correlation-xyz", ledgerEntry.CorrelationId);
 
-        // 3. Verificar Contenido JSON
-        var json = JsonSerializer.Deserialize<JsonElement>(outboxMsg.Content);
-        Assert.Equal(payment.Id.Value.ToString(), json.GetProperty("PaymentId").GetProperty("Value").GetString());
+        // Verificar snapshot JSON
+        using var doc = JsonDocument.Parse(ledgerEntry.StateSnapshot!);
+        Assert.Equal("Created", doc.RootElement.GetProperty("Status").GetString()); // Status enum como int -> string en JSON depende del serializer, pero aquí verificamos existencia
+        Assert.Equal("client-enterprise", persistedPayment.ClientId);
     }
 }

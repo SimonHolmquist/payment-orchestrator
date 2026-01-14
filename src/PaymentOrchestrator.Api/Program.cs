@@ -21,6 +21,11 @@ builder.Services.AddProblemDetails();
 builder.Services.AddSwaggerGen(c =>
 {
     c.OperationFilter<RequiredHeadersOperationFilter>();
+
+    // Integrar comentarios XML
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
 });
 
 builder.Services.AddApplicationServices();

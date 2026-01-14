@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PaymentOrchestrator.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using PaymentOrchestrator.Infrastructure.Persistence;
 namespace PaymentOrchestrator.Infrastructure.Migrations
 {
     [DbContext(typeof(PaymentOrchestratorDbContext))]
-    partial class PaymentOrchestratorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260114023932_AddPaymentLedger")]
+    partial class AddPaymentLedger
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
