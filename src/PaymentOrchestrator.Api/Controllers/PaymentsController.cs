@@ -19,15 +19,17 @@ namespace PaymentOrchestrator.Api.Controllers;
 [Route("payments")]
 public sealed class PaymentsController(IMediator mediator, IIdempotencyStore idempotency, IClock clock) : ControllerBase
 {
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        WriteIndented = true
+    };
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePaymentRequest req, CancellationToken ct)
     {
         var operation = "CreatePayment";
         var idempotencyKey = Request.Headers["Idempotency-Key"].FirstOrDefault()?.Trim();
-        var requestHash = Sha256Hex(JsonSerializer.Serialize(req, options: new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        }));
+        var requestHash = Sha256Hex(JsonSerializer.Serialize(req, _jsonOptions));
 
         if (!string.IsNullOrWhiteSpace(idempotencyKey))
         {
