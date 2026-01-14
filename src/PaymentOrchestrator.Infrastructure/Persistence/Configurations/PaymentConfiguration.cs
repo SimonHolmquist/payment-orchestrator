@@ -4,49 +4,41 @@ using PaymentOrchestrator.Domain.Payments;
 
 namespace PaymentOrchestrator.Infrastructure.Persistence.Configurations;
 
-public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
+public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 {
     public void Configure(EntityTypeBuilder<Payment> builder)
     {
         builder.ToTable("Payments");
+        builder.HasKey(x => x.Id);
 
-        builder.HasKey(p => p.Id);
+        builder.Property(x => x.Id)
+            .HasConversion(id => id.Value, value => new PaymentId(value))
+            .ValueGeneratedNever();
 
-        // Conversión de PaymentId fuertemente tipado a Guid
-        builder.Property(p => p.Id)
-            .HasConversion(
-                id => id.Value,
-                value => new PaymentId(value));
+        builder.Property(x => x.ClientId).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.Status).HasConversion<int>().IsRequired();
 
-        builder.Property(p => p.ClientId)
-            .HasMaxLength(100)
-            .IsRequired();
-
-        // Ensure decimal precision/scale for monetary accumulators to avoid silent truncation
-        builder.Property(p => p.CapturedAmount)
-            .HasPrecision(18, 2);
-
-        builder.Property(p => p.RefundedAmount)
-            .HasPrecision(18, 2);
-
-        // Mapeo de Value Object Money como Owned Entity (Columns: Amount, Currency)
-        builder.OwnsOne(p => p.Amount, money =>
+        builder.OwnsOne(x => x.Amount, money =>
         {
-            money.Property(m => m.Amount)
-                .HasColumnName("Amount")
-                .HasPrecision(18, 2); // Estándar financiero
-
-            money.Property(m => m.Currency)
-                .HasColumnName("Currency")
-                .HasMaxLength(3);
+            money.Property(m => m.Amount).HasColumnName("Amount").HasColumnType("decimal(18,2)");
+            money.Property(m => m.Currency).HasColumnName("Currency").HasMaxLength(3);
         });
 
-        // Configuración de concurrencia optimista
-        builder.Property(p => p.Status)
-            .HasConversion<string>(); // O int, según preferencia. Roadmap sugiere SQL como source of truth.
+        builder.Property(x => x.CapturedAmount).HasColumnType("decimal(18,2)");
+        builder.Property(x => x.RefundedAmount).HasColumnType("decimal(18,2)");
 
-        // RowVersion para concurrencia (Opcional pero recomendado en M2)
+        // Configuración de RowVersion
         builder.Property<byte[]>("RowVersion")
-            .IsRowVersion();
+            .IsRowVersion()
+            .HasColumnName("RowVersion");
+
+        builder.Property(x => x.CreatedAt).IsRequired();
+        builder.Property(x => x.AuthorizedAt);
+        builder.Property(x => x.CapturedAt);
+        builder.Property(x => x.CancelledAt);
+        builder.Property(x => x.FailedAt);
+
+        builder.Property(x => x.PspReference).HasMaxLength(200);
+        builder.Property(x => x.FailureReason).HasMaxLength(500);
     }
 }

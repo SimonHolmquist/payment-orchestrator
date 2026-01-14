@@ -82,7 +82,7 @@ public sealed class PaymentRepositoryTests : IAsyncLifetime
         // B. Verificar Outbox (Requisito M2)
         var outboxMsg = await assertContext.OutboxMessages.FirstOrDefaultAsync();
         Assert.NotNull(outboxMsg);
-        Assert.Equal("PaymentCreated", outboxMsg.Type);
+        Assert.Equal("payment.created.v1", outboxMsg.Type);
         Assert.Equal("test-correlation-xyz", outboxMsg.CorrelationId);
 
         // C. Verificar Ledger (Requisito A - Enterprise)
@@ -94,7 +94,7 @@ public sealed class PaymentRepositoryTests : IAsyncLifetime
 
         // Verificar snapshot JSON
         using var doc = JsonDocument.Parse(ledgerEntry.StateSnapshot!);
-        Assert.Equal("Created", doc.RootElement.GetProperty("Status").GetString()); // Status enum como int -> string en JSON depende del serializer, pero aquí verificamos existencia
+        Assert.Equal("Created", doc.RootElement.GetProperty("status").GetString());
         Assert.Equal("client-enterprise", persistedPayment.ClientId);
     }
 }

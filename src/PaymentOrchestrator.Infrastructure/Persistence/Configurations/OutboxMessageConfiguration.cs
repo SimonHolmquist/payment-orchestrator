@@ -10,5 +10,14 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
     {
         builder.ToTable("OutboxMessages");
         builder.HasKey(x => x.Id);
+
+        builder.Property(x => x.Type).HasMaxLength(300).IsRequired();
+        builder.Property(x => x.AggregateType).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.CorrelationId).HasMaxLength(100).IsRequired();
+
+        builder.Property(x => x.Content).IsRequired();
+        builder.Property(x => x.Error);
+
+        builder.HasIndex(x => x.PublishedAt);
     }
 }

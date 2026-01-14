@@ -27,7 +27,7 @@ public sealed class Payment
     public DateTimeOffset? CancelledAt { get; private set; }
     public DateTimeOffset? FailedAt { get; private set; }
 
-    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;
 
     private Payment() { } // para ORMs
 

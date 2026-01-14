@@ -1,7 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore.Diagnostics;
 using PaymentOrchestrator.Application.Common.Interfaces;
+using PaymentOrchestrator.Domain.Common;
 using PaymentOrchestrator.Domain.Payments;
 using PaymentOrchestrator.Infrastructure.Persistence.Entities;
+using PaymentOrchestrator.Infrastructure.Serialization;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization; // <--- NECESARIO
 
@@ -10,12 +13,6 @@ namespace PaymentOrchestrator.Infrastructure.Persistence.Interceptors;
 public sealed class DomainEventsToOutboxInterceptor(ICorrelationContext correlationContext)
     : SaveChangesInterceptor
 {
-    // Configuración estática para serializar Enums como Strings (Legibilidad en Auditoría)
-    private static readonly JsonSerializerOptions _serializerOptions = new()
-    {
-        Converters = { new JsonStringEnumConverter() }
-    };
-
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
@@ -35,13 +32,14 @@ public sealed class DomainEventsToOutboxInterceptor(ICorrelationContext correlat
 
             foreach (var domainEvent in events)
             {
+                var eventType = domainEvent.GetType();
+                var eventName = eventType.GetCustomAttribute<EventNameAttribute>()?.Name ?? eventType.Name;
                 // 1. Generar Outbox Message
                 var outboxMsg = new OutboxMessage
                 {
                     Id = Guid.NewGuid(),
-                    Type = domainEvent.GetType().Name,
-                    // Usamos las opciones aquí también para consistencia
-                    Content = JsonSerializer.Serialize(domainEvent, domainEvent.GetType(), _serializerOptions),
+                    Type = eventName,
+                    Content = JsonSerializer.Serialize(domainEvent, domainEvent.GetType(), JsonConfig.Default),
                     AggregateId = payment.Id.Value,
                     AggregateType = nameof(Payment),
                     CorrelationId = correlationContext.CorrelationId,
@@ -67,7 +65,7 @@ public sealed class DomainEventsToOutboxInterceptor(ICorrelationContext correlat
                         payment.RefundedAmount,
                         payment.PspReference,
                         payment.FailureReason
-                    }, _serializerOptions)
+                    }, JsonConfig.Default)
                 };
                 context.Set<PaymentLedgerEntry>().Add(ledgerEntry);
             }
