@@ -78,3 +78,8 @@ publish/
 appsettings.*.local.json
 appsettings.Development.json
 secrets.json
+
+# =========================
+# Rendered charts
+# =========================
+_rendered

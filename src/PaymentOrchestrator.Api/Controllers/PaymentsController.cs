@@ -35,6 +35,7 @@ public sealed class PaymentsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("{id:guid}/authorize")]
+    [Idempotent(Operation = "AuthorizePayment")]
     public async Task<IActionResult> Authorize(Guid id, [FromBody] AuthorizeRequest req, CancellationToken ct)
     {
         await mediator.Send(new AuthorizePaymentCommand(id, req.PspReference), ct);
@@ -42,6 +43,7 @@ public sealed class PaymentsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("{id:guid}/capture")]
+    [Idempotent(Operation = "CapturePayment")]
     public async Task<IActionResult> Capture(Guid id, [FromBody] CaptureRequest req, CancellationToken ct)
     {
         await mediator.Send(new CapturePaymentCommand(id, req.Amount), ct);
@@ -49,6 +51,7 @@ public sealed class PaymentsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("{id:guid}/refund")]
+    [Idempotent(Operation = "RefundPayment")]
     public async Task<IActionResult> Refund(Guid id, [FromBody] RefundRequest req, CancellationToken ct)
     {
         await mediator.Send(new RefundPaymentCommand(id, req.Amount), ct);
@@ -56,6 +59,7 @@ public sealed class PaymentsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("{id:guid}/cancel")]
+    [Idempotent(Operation = "CancelPayment")]
     public async Task<IActionResult> Cancel(Guid id, CancellationToken ct)
     {
         await mediator.Send(new CancelPaymentCommand(id), ct);
