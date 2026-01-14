@@ -1,7 +1,7 @@
 # ADR-0009: API Style and Error Contract (ProblemDetails)
 
 ## Status
-Proposed
+Accepted
 
 ## Context
 We need consistent REST APIs for multiple clients and predictable error handling across services. Payment APIs must communicate validation/state-transition errors clearly.

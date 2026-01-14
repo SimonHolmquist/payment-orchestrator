@@ -1,6 +1,7 @@
 using PaymentOrchestrator.Api.Infrastructure;
 using PaymentOrchestrator.Api.Infrastructure.Correlation;
 using PaymentOrchestrator.Api.Infrastructure.Errors;
+using PaymentOrchestrator.Api.Infrastructure.Idempotency;
 using PaymentOrchestrator.Api.Infrastructure.Swagger;
 using PaymentOrchestrator.Api.Infrastructure.Time;
 using PaymentOrchestrator.Application;
@@ -9,7 +10,10 @@ using PaymentOrchestrator.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<IdempotencyFilter>(); // Registrar global o por atributo
+});
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();

@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PaymentOrchestrator.Application.Common.Exceptions;
 using PaymentOrchestrator.Domain.Common;
 
@@ -15,7 +16,8 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             ValidationException => (StatusCodes.Status400BadRequest, "Validation error", "https://httpstatuses.com/400"),
             NotFoundException => (StatusCodes.Status404NotFound, "Not found", "https://httpstatuses.com/404"),
             ConflictException => (StatusCodes.Status409Conflict, "Conflict", "https://httpstatuses.com/409"),
-            DomainException => (StatusCodes.Status409Conflict, "Domain conflict", "https://httpstatuses.com/409"),
+            DomainException => (StatusCodes.Status422UnprocessableEntity, "Domain validation error", "https://httpstatuses.com/422"), // Mejor 422 para dominio
+            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "Concurrency Conflict", "https://httpstatuses.com/409"), // <--- NUEVO
             _ => (StatusCodes.Status500InternalServerError, "Unexpected error", "https://httpstatuses.com/500")
         };
 
