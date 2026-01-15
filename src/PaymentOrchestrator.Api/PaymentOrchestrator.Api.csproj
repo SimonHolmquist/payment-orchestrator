@@ -4,7 +4,6 @@
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
-		<PackageReference Include="Microsoft.OpenApi" />
 		<PackageReference Include="Swashbuckle.AspNetCore" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
 	</ItemGroup>
