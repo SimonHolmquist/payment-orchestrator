@@ -8,4 +8,8 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PaymentOrchestrator.Infrastructure\PaymentOrchestrator.Infrastructure.csproj" />
+  </ItemGroup>
  </Project>

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentOrchestrator.Application.Common.Interfaces;
+using PaymentOrchestrator.Infrastructure.Messaging;
 using PaymentOrchestrator.Infrastructure.Persistence;
 using PaymentOrchestrator.Infrastructure.Persistence.Interceptors;
 using PaymentOrchestrator.Infrastructure.Psp; // Importante
@@ -32,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<IIdempotencyStore, EfIdempotencyStore>();
         services.AddScoped<IOutboxWriter, EfOutboxWriter>();
         services.AddSingleton<IPspClient, NullPspClient>();
+        services.AddSingleton<IMessageBus, InMemoryMessageBus>();
 
 
         return services;

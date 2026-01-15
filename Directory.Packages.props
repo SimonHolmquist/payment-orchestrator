@@ -17,9 +17,10 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.2" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
     <PackageVersion Include="Microsoft.OpenApi" Version="3.1.2" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.1.0" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.4" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.4" />
+	<PackageVersion Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+	<PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="6.6.2" />
+	<PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.6.2" />
+	<PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.6.2" />
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="Testcontainers.MsSql" Version="4.10.0" />

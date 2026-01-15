@@ -14,6 +14,7 @@ public sealed class OutboxMessage
 
     public DateTimeOffset OccurredAt { get; set; }
     public DateTimeOffset? PublishedAt { get; set; }
+    public DateTimeOffset? ProcessedAt { get; set; }
 
     public int Attempts { get; set; }
     public string? Error { get; set; }

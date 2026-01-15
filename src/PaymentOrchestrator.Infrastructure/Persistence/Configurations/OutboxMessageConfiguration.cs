@@ -19,5 +19,8 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
         builder.Property(x => x.Error);
 
         builder.HasIndex(x => x.PublishedAt);
+        builder.Property(x => x.ProcessedAt);
+        builder.HasIndex(x => x.ProcessedAt)
+               .HasFilter("[ProcessedAt] IS NULL");
     }
 }
